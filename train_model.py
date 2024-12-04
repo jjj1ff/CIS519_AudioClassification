@@ -8,14 +8,8 @@ from torchvision.transforms import Compose
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-
 class AudioDataset(Dataset):
     def __init__(self, root_dir, transform=None):
-        """
-        Args:
-            root_dir (str): Path to the dataset root directory.
-            transform (callable, optional): A function/transform to apply to the audio data.
-        """
         self.root_dir = root_dir
         self.transform = transform
         self.classes = os.listdir(root_dir)
@@ -104,6 +98,8 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-4)
 
 def train_model(model, train_loader, val_loader, epochs=10):
+    best_val_acc = 0.0
+    best_model_path = "best_model.pth"
     for epoch in range(epochs):
         model.train()
         train_loss, correct, total = 0, 0, 0
@@ -126,7 +122,13 @@ def train_model(model, train_loader, val_loader, epochs=10):
         val_loss, val_acc = evaluate_model(model, val_loader)
         print(f"Epoch {epoch+1}/{epochs}, Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}%, "
               f"Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.2f}%")
+        if val_acc > best_val_acc:
+            best_val_acc = val_acc
+            torch.save(model.state_dict(), best_model_path)
+            print(f"New best model saved with Val Acc: {best_val_acc:.2f}%")
 
+    print(f"Training complete. Best Val Acc: {best_val_acc:.2f}%")
+    
 def evaluate_model(model, val_loader):
     model.eval()
     val_loss, correct, total = 0, 0, 0

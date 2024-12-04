@@ -82,7 +82,7 @@ print(f"Model Accuracy: {accuracy:.2f}")
 for i in range(len(y_pred)):
   print(f'Correct {(y_pred[i] == y_test[i])}, Pred {y_pred[i]}, Label: {y_test[i]}')
 
-  base_dir = "EVAL"
+base_dir = "EVAL"
 eval_X = []
 eval_Y = []
 
