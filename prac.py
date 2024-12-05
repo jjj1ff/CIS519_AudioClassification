@@ -1,5 +1,6 @@
 def run_trained_model(X):
     import os
+    import numpy as np
     import torch
     import torch.nn as nn
     import torchaudio
@@ -88,12 +89,18 @@ def run_trained_model(X):
         weights_path = "my_weights.pth"
         download_weights(weights_url, weights_path)
         model = load_weights_to_new_model(weights_path, 7, device)
-        batch_size = 32
         transform = transform_audio()
         val_dataset = AudioDataset(X, Y, transform=transform)
         eval_loader = DataLoader(val_dataset, batch_size=32,collate_fn=collate_fn)
-        return model(X)
+        all_preds = []
+        with torch.no_grad():
+            for batch_waveforms, _ in eval_loader:
+                batch_waveforms = batch_waveforms.to(device)
+                outputs = model(batch_waveforms)
+                preds = torch.argmax(outputs, dim=1)
+                all_preds.extend(preds.cpu().numpy())
 
+        return np.array(all_preds)
     predictions = classifier(X)
-    assert predictions.shape == Y. shape
+    assert predictions.shape == Y.shape
     return predictions
