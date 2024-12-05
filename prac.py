@@ -47,8 +47,9 @@ def run_trained_model(X):
             filepath = self.filepaths[idx]
             label = self.labels[idx]
 
-            waveform, sample_rate = torchaudio.load(filepath)
-
+            waveform, _ = torchaudio.load(filepath)
+            if waveform.size(0) > 1:
+                waveform = torch.mean(waveform, dim=0, keepdim=True)
             if self.transform:
                 waveform = self.transform(waveform)
             if waveform.dim() == 2:
@@ -69,7 +70,6 @@ def run_trained_model(X):
 
     def collate_fn(batch):
         waveforms, labels = zip(*batch)
-        waveforms = [waveform if waveform.dim() == 3 else waveform.unsqueeze(0) for waveform in waveforms]
         max_len = max(waveform.shape[-1] for waveform in waveforms)
         padded_waveforms = [torch.nn.functional.pad(waveform, (0, max_len - waveform.shape[-1])) for waveform in waveforms]
         return torch.stack(padded_waveforms), torch.tensor(labels, dtype=torch.long)
