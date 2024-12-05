@@ -5,23 +5,13 @@ from torch.utils.data import DataLoader, Dataset
 import torch.nn as nn
 import torch.optim as optim
 from torchvision.transforms import Compose
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+import numpy as np
 
 class AudioDataset(Dataset):
-    def __init__(self, root_dir, transform=None):
-        self.root_dir = root_dir
+    def __init__(self, filepaths, labels, transform=None):
+        self.filepaths = filepaths
+        self.labels = labels
         self.transform = transform
-        self.classes = os.listdir(root_dir)
-        self.filepaths = []
-        self.labels = []
-
-        for idx, class_name in enumerate(self.classes):
-            class_dir = os.path.join(root_dir, class_name)
-            for file_name in os.listdir(class_dir):
-                if file_name.endswith(".wav"):
-                    self.filepaths.append(os.path.join(class_dir, file_name))
-                    self.labels.append(idx)  # Class index as the label
 
     def __len__(self):
         return len(self.filepaths)
@@ -30,11 +20,13 @@ class AudioDataset(Dataset):
         filepath = self.filepaths[idx]
         label = self.labels[idx]
 
-        waveform, sample_rate = torchaudio.load(filepath)
-
+        waveform, _ = torchaudio.load(filepath)
+        if waveform.size(0) > 1:
+            waveform = torch.mean(waveform, dim=0, keepdim=True)
         if self.transform:
             waveform = self.transform(waveform)
-
+        if waveform.dim() == 2:
+             waveform = waveform.unsqueeze(0)
         return waveform, label
 
 def transform_audio(sample_rate=16000, n_fft=512, n_mels=64, hop_length=256):
@@ -55,15 +47,6 @@ def collate_fn(batch):
     padded_waveforms = [torch.nn.functional.pad(waveform, (0, max_len - waveform.shape[-1])) for waveform in waveforms]
     return torch.stack(padded_waveforms), torch.tensor(labels, dtype=torch.long)
 
-train = "DATA/"
-val = "EVAL/"
-transform = transform_audio()
-
-train_dataset = AudioDataset(root_dir=train, transform=transform)
-val_dataset = AudioDataset(root_dir=val, transform=transform)
-
-train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True,collate_fn=collate_fn)
-val_loader = DataLoader(val_dataset, batch_size=32,collate_fn=collate_fn)
 
 class AudioClassifier(nn.Module):
     def __init__(self, num_classes):
@@ -90,12 +73,6 @@ class AudioClassifier(nn.Module):
         x = self.adaptive_pool(x)
         x = self.fc(x)
         return x
-
-num_classes = 7
-model = AudioClassifier(num_classes=num_classes).to(device)
-
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-4)
 
 def train_model(model, train_loader, val_loader, epochs=10):
     best_val_acc = 0.0
@@ -147,4 +124,62 @@ def evaluate_model(model, val_loader):
     val_acc = 100.0 * correct / total
     return val_loss / len(val_loader), val_acc
 
+
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+CLASS_TO_LABEL = {
+    'water': 0,
+    'table': 1,
+    'sofa': 2,
+    'railing': 3,
+    'glass': 4,
+    'blackboard': 5,
+    'ben': 6,
+}
+
+LABEL_TO_CLASS = {v: k for k, v in CLASS_TO_LABEL.items()}
+train_dir = "DATA/"
+X = []
+Y = []
+for idx, class_folder in enumerate(os.listdir(train_dir)):
+    class_folder_path = os.path.join(train_dir, class_folder)
+    if os.path.isdir(class_folder_path):
+        y = CLASS_TO_LABEL[class_folder]
+        for sample in os.listdir(class_folder_path):
+            if sample.endswith('.wav'):
+                file_path = os.path.join(class_folder_path, sample)
+                X.append(file_path)
+                Y.append(y)
+X = np.array(X)
+Y = np.array(Y)
+
+val_dir = "EVAL/"
+val_X = []
+val_Y = []
+for idx, class_folder in enumerate(os.listdir(val_dir)):
+    class_folder_path = os.path.join(val_dir, class_folder)
+    if os.path.isdir(class_folder_path):
+        y = CLASS_TO_LABEL[class_folder]
+        for sample in os.listdir(class_folder_path):
+            if sample.endswith('.wav'):
+                file_path = os.path.join(class_folder_path, sample)
+                val_X.append(file_path)
+                val_Y.append(y)
+val_X = np.array(val_X)
+val_Y = np.array(val_Y)
+transform = transform_audio()
+
+train_dataset = AudioDataset(X,Y, transform=transform)
+val_dataset = AudioDataset(val_X,val_Y, transform=transform)
+
+train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True,collate_fn=collate_fn)
+val_loader = DataLoader(val_dataset, batch_size=32,collate_fn=collate_fn)
+num_classes = 7
+model = AudioClassifier(num_classes=num_classes).to(device)
+
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-4)
+
 train_model(model, train_loader, val_loader, epochs=50)
+

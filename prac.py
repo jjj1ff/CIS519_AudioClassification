@@ -106,3 +106,39 @@ def run_trained_model(X):
     predictions = classifier(X)
     assert predictions.shape == Y.shape
     return predictions
+
+import numpy as np
+import os
+
+CLASS_TO_LABEL = {
+    'water': 0,
+    'table': 1,
+    'sofa': 2,
+    'railing': 3,
+    'glass': 4,
+    'blackboard': 5,
+    'ben': 6,
+}
+
+LABEL_TO_CLASS = {v: k for k, v in CLASS_TO_LABEL.items()}
+
+val_dir = "EVAL/"
+X = []
+Y = []
+for idx, class_folder in enumerate(os.listdir(val_dir)):
+    class_folder_path = os.path.join(val_dir, class_folder)
+    if os.path.isdir(class_folder_path):
+        y = CLASS_TO_LABEL[class_folder]
+        for sample in os.listdir(class_folder_path):
+            if sample.endswith('.wav'):
+                file_path = os.path.join(class_folder_path, sample)
+                X.append(file_path)
+                Y.append(y)
+X = np.array(X)
+Y = np.array(Y)
+
+from sklearn.metrics import accuracy_score
+
+Y_pred = run_trained_model(X)
+accuracy = accuracy_score(Y, Y_pred)
+print(f"Model Accuracy on unseen data: {accuracy:.2f}")
