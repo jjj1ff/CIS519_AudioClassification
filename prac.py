@@ -37,21 +37,12 @@ def run_trained_model(X):
         def __init__(self, root_dir, transform=None):
             self.root_dir = root_dir
             self.transform = transform
-            self.classes = os.listdir(root_dir)
-            self.filepaths = []
-            self.labels = []
-
-            for idx, class_name in enumerate(self.classes):
-                class_dir = os.path.join(root_dir, class_name)
-                for file_name in os.listdir(class_dir):
-                    if file_name.endswith(".wav"):
-                        self.filepaths.append(os.path.join(class_dir, file_name))
 
         def __len__(self):
-            return len(self.filepaths)
+            return len(self.root_dir)
 
         def __getitem__(self, idx):
-            filepath = self.filepaths[idx]
+            filepath = self.root_dir
 
             waveform, sample_rate = torchaudio.load(filepath)
 
@@ -102,5 +93,5 @@ def run_trained_model(X):
         return model(X)
 
     predictions = classifier(X)
-    assert predictions . shape == Y. shape
+    assert predictions.shape == Y.shape
     return predictions
