@@ -87,7 +87,7 @@ def run_trained_model(X):
 
     def classifier(X):
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        weights_url = "https://drive.google.com/file/d/1kTQt9f5WRdiNNWR9T9vCn531OJJIrv7N/view?usp=sharing"
+        weights_url = "https://drive.google.com/uc?id=1iULKy5DLiNLoPkqmcW8JNY5gtO6gfeFy"
         weights_path = "my_weights.pth"
         download_weights(weights_url, weights_path)
         model = load_weights_to_new_model(weights_path, 7, device)
