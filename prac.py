@@ -34,23 +34,25 @@ def run_trained_model(X):
             return x
     
     class AudioDataset(Dataset):
-        def __init__(self, root_dir, transform=None):
-            self.root_dir = root_dir
+        def __init__(self, filepaths, labels, transform=None):
+            self.filepaths = filepaths
+            self.labels = labels
             self.transform = transform
 
         def __len__(self):
-            return len(self.root_dir)
+            return len(self.filepaths)
 
         def __getitem__(self, idx):
-            filepath = self.root_dir
+            filepath = self.filepaths[idx]
+            label = self.labels[idx]
 
             waveform, sample_rate = torchaudio.load(filepath)
 
             if self.transform:
                 waveform = self.transform(waveform)
 
-            return waveform
-        
+            return waveform, label
+            
     def transform_audio(sample_rate=16000, n_fft=512, n_mels=64, hop_length=256):
         return Compose([
             torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=16000),
@@ -88,10 +90,10 @@ def run_trained_model(X):
         model = load_weights_to_new_model(weights_path, 7, device)
         batch_size = 32
         transform = transform_audio()
-        val_dataset = AudioDataset(root_dir=X, transform=transform)
+        val_dataset = AudioDataset(X, Y, transform=transform)
         eval_loader = DataLoader(val_dataset, batch_size=32,collate_fn=collate_fn)
         return model(X)
 
     predictions = classifier(X)
-    assert predictions.shape == Y.shape
+    assert predictions.shape == Y. shape
     return predictions
