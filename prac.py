@@ -51,7 +51,8 @@ def run_trained_model(X):
 
             if self.transform:
                 waveform = self.transform(waveform)
-
+            if waveform.dim() == 2:
+                waveform = waveform.unsqueeze(0)
             return waveform, label
             
     def transform_audio(sample_rate=16000, n_fft=512, n_mels=64, hop_length=256):
@@ -68,10 +69,11 @@ def run_trained_model(X):
 
     def collate_fn(batch):
         waveforms, labels = zip(*batch)
+        waveforms = [waveform if waveform.dim() == 3 else waveform.unsqueeze(0) for waveform in waveforms]
         max_len = max(waveform.shape[-1] for waveform in waveforms)
         padded_waveforms = [torch.nn.functional.pad(waveform, (0, max_len - waveform.shape[-1])) for waveform in waveforms]
         return torch.stack(padded_waveforms), torch.tensor(labels, dtype=torch.long)
-
+    
     def download_weights(url, output_path):
         gdown.download(url, output_path, quiet=False)
         print("Weights downloaded.")

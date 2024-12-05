@@ -45,7 +45,7 @@ class AudioDataset(Dataset):
             for file_name in os.listdir(class_dir):
                 if file_name.endswith(".wav"):
                     self.filepaths.append(os.path.join(class_dir, file_name))
-                    self.labels.append(idx)
+                    self.labels.append(idx)     
 
     def __len__(self):
         return len(self.filepaths)
