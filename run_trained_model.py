@@ -17,7 +17,7 @@ def run_trained_model(X):
 
   X_list = np.array(X_list)
   import gdown
-  url = 'https://drive.google.com/file/d/1TI7fxm4aMevBF7eKl547NjIoARV70YXm/view?usp=sharing'
+  url = 'https://drive.google.com/file/d/1xP54Qp_0t33X6le1Ffis9nYXcBukiHYB/view?usp=sharing'
 
   output = "best_model.pkl"
   gdown.download(url, output, fuzzy=True)
