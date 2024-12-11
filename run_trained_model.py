@@ -24,7 +24,6 @@ def run_trained_model(X):
 
 
   import pickle
-  import sklearn
   with open(output,'rb') as f:
     model = pickle.load(f)
 
