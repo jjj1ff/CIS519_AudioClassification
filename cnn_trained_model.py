@@ -50,10 +50,10 @@ def run_trained_model(X):
     class SimpleCNN(nn.Module):
         def __init__(self, num_classes):
             super(SimpleCNN, self).__init__()
-            self.conv1 = nn.Conv2d(1, 32, kernel_size=3, stride=1, padding=1)
-            self.conv2 = nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1)
+            self.conv1 = nn.Conv2d(1, 32, kernel_size=5, stride=1, padding=1)
+            self.conv2 = nn.Conv2d(32, 64, kernel_size=5, stride=1, padding=1)
             self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
-            self.fc1 = nn.Linear(32768, 128)
+            self.fc1 = nn.Linear(26880, 128)
             self.fc2 = nn.Linear(128, num_classes)
 
         def forward(self, x):
@@ -76,7 +76,7 @@ def run_trained_model(X):
         return model
 
     def classifier(X):
-        weights_url = "https://drive.google.com/uc?id=1OvHJknFT_Nhe1teleliVkJTmPDmfJx5V"
+        weights_url = "https://drive.google.com/uc?id=1CzJiWhlARalfZ5AbM5RUJcTwsx2Jy974"
         weights_path = "my_weights_cnn.pth"
         download_weights(weights_url, weights_path)
         model = load_weights_to_new_model(weights_path)
@@ -93,3 +93,38 @@ def run_trained_model(X):
     predictions = classifier(X)
     assert predictions.shape == Y.shape
     return predictions
+
+
+import os
+import numpy as np
+CLASS_TO_LABEL = {
+    'water': 0,
+    'table': 1,
+    'sofa': 2,
+    'railing': 3,
+    'glass': 4,
+    'blackboard': 5,
+    'ben': 6,
+}
+
+LABEL_TO_CLASS = {v: k for k, v in CLASS_TO_LABEL.items()}
+
+base_dir = 'DATA'
+X = []
+Y = []
+for idx, class_folder in enumerate(os.listdir(base_dir)):
+    class_folder_path = os.path.join(base_dir, class_folder)
+    if os.path.isdir(class_folder_path):
+        y = CLASS_TO_LABEL[class_folder]
+        for sample in os.listdir(class_folder_path):
+            file_path = os.path.join(class_folder_path, sample)
+            X.append(file_path)
+            Y.append(y)
+X = np.array(X)
+Y = np.array(Y)
+
+from sklearn.metrics import accuracy_score
+
+Y_pred = run_trained_model(X)
+accuracy = accuracy_score(Y, Y_pred)
+print(f"Model Accuracy on unseen data: {accuracy:.2f}")

@@ -50,10 +50,10 @@ def run_trained_model(X):
     class SimpleCNN(nn.Module):
         def __init__(self, num_classes):
             super(SimpleCNN, self).__init__()
-            self.conv1 = nn.Conv2d(1, 32, kernel_size=3, stride=1, padding=1)
-            self.conv2 = nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1)
+            self.conv1 = nn.Conv2d(1, 32, kernel_size=5, stride=1, padding=1)
+            self.conv2 = nn.Conv2d(32, 64, kernel_size=5, stride=1, padding=1)
             self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
-            self.fc1 = nn.Linear(32768, 128)
+            self.fc1 = nn.Linear(26880, 128)
             self.fc2 = nn.Linear(128, num_classes)
 
         def forward(self, x):
@@ -76,7 +76,7 @@ def run_trained_model(X):
         return model
 
     def classifier(X):
-        weights_url = "https://drive.google.com/uc?id=1OvHJknFT_Nhe1teleliVkJTmPDmfJx5V"
+        weights_url = "https://drive.google.com/uc?id=1CzJiWhlARalfZ5AbM5RUJcTwsx2Jy974"
         weights_path = "my_weights_cnn.pth"
         download_weights(weights_url, weights_path)
         model = load_weights_to_new_model(weights_path)

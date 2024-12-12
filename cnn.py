@@ -50,10 +50,10 @@ class AudioDataset(torch.utils.data.Dataset):
 class SimpleCNN(nn.Module):
     def __init__(self, num_classes):
         super(SimpleCNN, self).__init__()
-        self.conv1 = nn.Conv2d(1, 32, kernel_size=3, stride=1, padding=1)
-        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1)
+        self.conv1 = nn.Conv2d(1, 32, kernel_size=5, stride=1, padding=1)
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=5, stride=1, padding=1)
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.fc1 = nn.Linear(32768, 128)
+        self.fc1 = nn.Linear(26880, 128)
         self.fc2 = nn.Linear(128, num_classes)
 
     def forward(self, x):
@@ -77,18 +77,17 @@ CLASS_TO_LABEL = {
 
 LABEL_TO_CLASS = {v: k for k, v in CLASS_TO_LABEL.items()}
 
-base_dirs = ['EVAL','DATA']
+base_dir = 'DATA'
 X = []
 Y = []
-for base_dir in base_dirs:
-    for idx, class_folder in enumerate(os.listdir(base_dir)):
-        class_folder_path = os.path.join(base_dir, class_folder)
-        if os.path.isdir(class_folder_path):
-            y = CLASS_TO_LABEL[class_folder]
-            for sample in os.listdir(class_folder_path):
-                file_path = os.path.join(class_folder_path, sample)
-                X.append(file_path)
-                Y.append(y)
+for idx, class_folder in enumerate(os.listdir(base_dir)):
+    class_folder_path = os.path.join(base_dir, class_folder)
+    if os.path.isdir(class_folder_path):
+        y = CLASS_TO_LABEL[class_folder]
+        for sample in os.listdir(class_folder_path):
+            file_path = os.path.join(class_folder_path, sample)
+            X.append(file_path)
+            Y.append(y)
 X = np.array(X)
 Y = np.array(Y)
 
@@ -114,7 +113,7 @@ for fold, (train_idx, val_idx) in enumerate(skf.split(X, Y)):
     criterion = nn.CrossEntropyLoss()
     optimizer = Adam(model.parameters(), lr=0.001)
 
-    num_epochs = 50
+    num_epochs = 30
     for epoch in range(num_epochs):
         model.train()
         for spectrograms, labels in train_loader:
